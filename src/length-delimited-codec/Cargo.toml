@@ -5,3 +5,7 @@ edition = "2024"
 publish = ["artifactory"]
 
 [dependencies]
+binrw = { version = "0.15.0", registry = "artifactory" }
+bytes = { version = "1.10.1", registry = "artifactory" }
+common = { version = "0.1.0", registry = "artifactory" }
+rayon = { version = "1.11.0", registry = "artifactory" }
