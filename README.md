@@ -13,6 +13,9 @@ We can create a new folder for each case and work on them in parallel.
 ```bash
 cd src/parallelization-over-nonlinear-data/
 
+cargo run --release
+
+cargo run --release -- --amount-of-work 10
 ```
 
 ### Length Delimited Codec
