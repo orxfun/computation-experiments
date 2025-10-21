@@ -17,9 +17,15 @@ pub fn run_all(roots: &[Node]) {
     let roots = || roots.to_vec();
 
     run("sequential", || sequential(roots()), log);
+
+    // rayon miri fails with: Undefined Behavior: trying to retag from <84156795> for SharedReadWrite permission at alloc41643328[0x8], but that tag does not exist in the borrow stack for this location
+    #[cfg(not(miri))]
     run("rayon", || rayon(roots()), log);
+
     run("orx_rec_exact", || orx_rec_exact(roots()), log);
+
     run("orx_rec", || orx_rec(roots(), 1024), log);
+
     run("orx_rec_into_eager", || orx_rec_into_eager(roots()), log);
 
     println!();

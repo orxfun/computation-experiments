@@ -9,26 +9,21 @@ pub fn run_all(roots: &[Node]) {
     println!("\n\n# IMMUTABLE REDUCTION");
     let log = |sum: u64| println!("  sum = {sum}");
 
-    let f = || sequential(roots);
-    run("sequential", f, log);
-
-    let f = || rayon(roots);
-    run("rayon", f, log);
-
-    let f = || orx_rec_exact(roots);
-    run("orx_rec_exact", f, log);
-
-    let f = || orx_rec_exact_flatmap(roots);
-    run("orx_rec_exact_flatmap", f, log);
-
-    let f = || orx_rec(roots, 1024);
-    run("orx_rec", f, log);
-
-    let f = || orx_rec_into_eager(roots);
-    run("orx_rec_into_eager", f, log);
-
-    let f = || orx_rec_into_eager_flatmap(roots);
-    run("orx_rec_into_eager_flatmap", f, log);
+    run("sequential", || sequential(roots), log);
+    run("rayon", || rayon(roots), log);
+    run("orx_rec_exact", || orx_rec_exact(roots), log);
+    run(
+        "orx_rec_exact_flatmap",
+        || orx_rec_exact_flatmap(roots),
+        log,
+    );
+    run("orx_rec", || orx_rec(roots, 1024), log);
+    run("orx_rec_into_eager", || orx_rec_into_eager(roots), log);
+    run(
+        "orx_rec_into_eager_flatmap",
+        || orx_rec_into_eager_flatmap(roots),
+        log,
+    );
 
     println!();
 }
