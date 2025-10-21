@@ -92,27 +92,9 @@ impl NodePtr {
         }
     }
 
-    fn new_org(node: &Node) -> Self {
-        Self {
-            value: (&node.value) as *const Vec<u64>,
-            children: (&node.children) as *const Vec<Node> as *mut Vec<Node>,
-            fib_n: (&node.fib_n) as *const Vec<u64> as *mut Vec<u64>,
-        }
-    }
-
-    fn set_fib_n(&self, fib_n: impl Iterator<Item = u64>) {
-        let vec_fib_n = unsafe { &mut *(self.fib_n as *mut Vec<u64>) };
-        *vec_fib_n = fib_n.collect();
-    }
-
     fn children(&self) -> impl ExactSizeIterator<Item = NodePtr> {
         let children = unsafe { &mut *self.children };
         children.iter_mut().map(NodePtr::new)
-    }
-
-    fn children_org(&self) -> &[Node] {
-        let children = unsafe { &*self.children };
-        children.as_slice()
     }
 
     fn values(&self) -> &[u64] {
@@ -135,29 +117,6 @@ pub fn orx_rec_exact(mut roots: Vec<Node>) -> Vec<Node> {
 
     root_ptrs
         .into_par_rec_exact(extend, num_nodes)
-        .for_each(|x| {
-            let fib_n: Vec<_> = x.values().iter().map(|x| Node::compute(*x)).collect();
-            // x.set_fib_n(fib_n);
-
-            let vec_fib_n = unsafe { &mut *(x.fib_n as *mut Vec<u64>) };
-            *vec_fib_n = fib_n;
-        });
-
-    roots
-}
-
-fn extend_org<'a>(node_ptr: &NodePtr) -> impl ExactSizeIterator<Item = NodePtr> + use<'a> {
-    let node_ptr = unsafe { &*(node_ptr as *const NodePtr) };
-    node_ptr.children_org().iter().map(NodePtr::new_org)
-}
-
-pub fn orx_rec_exact_org(roots: Vec<Node>) -> Vec<Node> {
-    let num_nodes: usize = roots.iter().map(|x| x.num_nodes()).sum();
-
-    let root_ptrs: Vec<_> = roots.iter().map(NodePtr::new_org).collect();
-
-    root_ptrs
-        .into_par_rec_exact(extend_org, num_nodes)
         .for_each(|x| {
             let fib_n: Vec<_> = x.values().iter().map(|x| Node::compute(*x)).collect();
             // x.set_fib_n(fib_n);
