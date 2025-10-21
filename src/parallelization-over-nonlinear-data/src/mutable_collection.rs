@@ -128,30 +128,30 @@ pub fn orx_rec_exact(mut roots: Vec<Node>) -> Vec<Node> {
     roots
 }
 
-pub fn orx_rec(roots: Vec<Node>, chunk_size: usize) -> Vec<Node> {
-    let root_ptrs: Vec<_> = roots.iter().map(NodePtr::new_org).collect();
+// pub fn orx_rec(roots: Vec<Node>, chunk_size: usize) -> Vec<Node> {
+//     let root_ptrs: Vec<_> = roots.iter().map(NodePtr::new_org).collect();
 
-    root_ptrs
-        .into_par_rec(extend_org)
-        .chunk_size(chunk_size)
-        .for_each(|x| {
-            let fib_n = x.values().iter().map(|x| Node::compute(*x));
-            x.set_fib_n(fib_n);
-        });
+//     root_ptrs
+//         .into_par_rec(extend_org)
+//         .chunk_size(chunk_size)
+//         .for_each(|x| {
+//             let fib_n = x.values().iter().map(|x| Node::compute(*x));
+//             x.set_fib_n(fib_n);
+//         });
 
-    roots
-}
+//     roots
+// }
 
-pub fn orx_rec_into_eager(roots: Vec<Node>) -> Vec<Node> {
-    let root_ptrs: Vec<_> = roots.iter().map(NodePtr::new_org).collect();
+// pub fn orx_rec_into_eager(roots: Vec<Node>) -> Vec<Node> {
+//     let root_ptrs: Vec<_> = roots.iter().map(NodePtr::new_org).collect();
 
-    root_ptrs
-        .into_par_rec(extend_org)
-        .into_eager()
-        .for_each(|x| {
-            let fib_n = x.values().iter().map(|x| Node::compute(*x));
-            x.set_fib_n(fib_n);
-        });
+//     root_ptrs
+//         .into_par_rec(extend_org)
+//         .into_eager()
+//         .for_each(|x| {
+//             let fib_n = x.values().iter().map(|x| Node::compute(*x));
+//             x.set_fib_n(fib_n);
+//         });
 
-    roots
-}
+//     roots
+// }
