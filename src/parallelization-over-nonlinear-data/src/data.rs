@@ -76,9 +76,9 @@ impl Node {
 
         #[cfg(miri)]
         vec![
-            Node::new(50, &mut rng),
+            // Node::new(50, &mut rng),
             Node::new(20, &mut rng),
-            Node::new(40, &mut rng),
+            // Node::new(40, &mut rng),
         ]
     }
 }

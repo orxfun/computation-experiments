@@ -23,11 +23,11 @@ pub fn run_all(roots: &[Node]) {
     let f = || orx_rec_exact(roots.to_vec());
     run("orx_rec_exact", f, log);
 
-    let f = || orx_rec(roots.to_vec(), 1024);
-    run("orx_rec", f, log);
+    // let f = || orx_rec(roots.to_vec(), 1024);
+    // run("orx_rec", f, log);
 
-    let f = || orx_rec_into_eager(roots.to_vec());
-    run("orx_rec_into_eager", f, log);
+    // let f = || orx_rec_into_eager(roots.to_vec());
+    // run("orx_rec_into_eager", f, log);
 
     println!();
 }
@@ -71,27 +71,46 @@ pub fn rayon(mut roots: Vec<Node>) -> Vec<Node> {
 
 // orx-parallel
 
+// struct NodePtr2<'a> {
+//     value: &'a Vec<u64>,
+//     children: &'a Vec<Node>,
+//     fib_n: *mut Vec<u64>,
+// }
+
 struct NodePtr {
     value: *const Vec<u64>,
-    children: *const Vec<Node>,
+    children: *mut Vec<Node>,
     fib_n: *mut Vec<u64>,
 }
 
 impl NodePtr {
-    fn new(node: &Node) -> Self {
+    fn new(node: &mut Node) -> Self {
         Self {
             value: (&node.value) as *const Vec<u64>,
-            children: (&node.children) as *const Vec<Node>,
+            children: (&mut node.children) as *mut Vec<Node>,
+            fib_n: (&mut node.fib_n) as *mut Vec<u64>,
+        }
+    }
+
+    fn new_org(node: &Node) -> Self {
+        Self {
+            value: (&node.value) as *const Vec<u64>,
+            children: (&node.children) as *const Vec<Node> as *mut Vec<Node>,
             fib_n: (&node.fib_n) as *const Vec<u64> as *mut Vec<u64>,
         }
     }
 
     fn set_fib_n(&self, fib_n: impl Iterator<Item = u64>) {
-        let vec_fib_n = unsafe { &mut *self.fib_n };
+        let vec_fib_n = unsafe { &mut *(self.fib_n as *mut Vec<u64>) };
         *vec_fib_n = fib_n.collect();
     }
 
-    fn children(&self) -> &[Node] {
+    fn children(&self) -> impl ExactSizeIterator<Item = NodePtr> {
+        let children = unsafe { &mut *self.children };
+        children.iter_mut().map(NodePtr::new)
+    }
+
+    fn children_org(&self) -> &[Node] {
         let children = unsafe { &*self.children };
         children.as_slice()
     }
@@ -106,29 +125,55 @@ unsafe impl Send for NodePtr {}
 
 fn extend<'a>(node_ptr: &NodePtr) -> impl ExactSizeIterator<Item = NodePtr> + use<'a> {
     let node_ptr = unsafe { &*(node_ptr as *const NodePtr) };
-    node_ptr.children().iter().map(NodePtr::new)
+    node_ptr.children()
 }
 
-pub fn orx_rec_exact(roots: Vec<Node>) -> Vec<Node> {
+pub fn orx_rec_exact(mut roots: Vec<Node>) -> Vec<Node> {
     let num_nodes: usize = roots.iter().map(|x| x.num_nodes()).sum();
 
-    let root_ptrs: Vec<_> = roots.iter().map(NodePtr::new).collect();
+    let root_ptrs: Vec<_> = roots.iter_mut().map(NodePtr::new).collect();
 
     root_ptrs
         .into_par_rec_exact(extend, num_nodes)
         .for_each(|x| {
-            let fib_n = x.values().iter().map(|x| Node::compute(*x));
-            x.set_fib_n(fib_n);
+            let fib_n: Vec<_> = x.values().iter().map(|x| Node::compute(*x)).collect();
+            // x.set_fib_n(fib_n);
+
+            let vec_fib_n = unsafe { &mut *(x.fib_n as *mut Vec<u64>) };
+            *vec_fib_n = fib_n;
+        });
+
+    roots
+}
+
+fn extend_org<'a>(node_ptr: &NodePtr) -> impl ExactSizeIterator<Item = NodePtr> + use<'a> {
+    let node_ptr = unsafe { &*(node_ptr as *const NodePtr) };
+    node_ptr.children_org().iter().map(NodePtr::new_org)
+}
+
+pub fn orx_rec_exact_org(roots: Vec<Node>) -> Vec<Node> {
+    let num_nodes: usize = roots.iter().map(|x| x.num_nodes()).sum();
+
+    let root_ptrs: Vec<_> = roots.iter().map(NodePtr::new_org).collect();
+
+    root_ptrs
+        .into_par_rec_exact(extend_org, num_nodes)
+        .for_each(|x| {
+            let fib_n: Vec<_> = x.values().iter().map(|x| Node::compute(*x)).collect();
+            // x.set_fib_n(fib_n);
+
+            let vec_fib_n = unsafe { &mut *(x.fib_n as *mut Vec<u64>) };
+            *vec_fib_n = fib_n;
         });
 
     roots
 }
 
 pub fn orx_rec(roots: Vec<Node>, chunk_size: usize) -> Vec<Node> {
-    let root_ptrs: Vec<_> = roots.iter().map(NodePtr::new).collect();
+    let root_ptrs: Vec<_> = roots.iter().map(NodePtr::new_org).collect();
 
     root_ptrs
-        .into_par_rec(extend)
+        .into_par_rec(extend_org)
         .chunk_size(chunk_size)
         .for_each(|x| {
             let fib_n = x.values().iter().map(|x| Node::compute(*x));
@@ -139,12 +184,15 @@ pub fn orx_rec(roots: Vec<Node>, chunk_size: usize) -> Vec<Node> {
 }
 
 pub fn orx_rec_into_eager(roots: Vec<Node>) -> Vec<Node> {
-    let root_ptrs: Vec<_> = roots.iter().map(NodePtr::new).collect();
+    let root_ptrs: Vec<_> = roots.iter().map(NodePtr::new_org).collect();
 
-    root_ptrs.into_par_rec(extend).into_eager().for_each(|x| {
-        let fib_n = x.values().iter().map(|x| Node::compute(*x));
-        x.set_fib_n(fib_n);
-    });
+    root_ptrs
+        .into_par_rec(extend_org)
+        .into_eager()
+        .for_each(|x| {
+            let fib_n = x.values().iter().map(|x| Node::compute(*x));
+            x.set_fib_n(fib_n);
+        });
 
     roots
 }
