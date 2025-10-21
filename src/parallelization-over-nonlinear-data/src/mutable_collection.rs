@@ -14,20 +14,13 @@ pub fn run_all(roots: &[Node]) {
         )
     };
 
-    // let f = || sequential(roots.to_vec());
-    // run("sequential", f, log);
+    let roots = || roots.to_vec();
 
-    // let f = || rayon(roots.to_vec());
-    // run("rayon", f, log);
-
-    let f = || orx_rec_exact(roots.to_vec());
-    run("orx_rec_exact", f, log);
-
-    // let f = || orx_rec(roots.to_vec(), 1024);
-    // run("orx_rec", f, log);
-
-    // let f = || orx_rec_into_eager(roots.to_vec());
-    // run("orx_rec_into_eager", f, log);
+    run("sequential", || sequential(roots()), log);
+    run("rayon", || rayon(roots()), log);
+    run("orx_rec_exact", || orx_rec_exact(roots()), log);
+    run("orx_rec", || orx_rec(roots(), 1024), log);
+    run("orx_rec_into_eager", || orx_rec_into_eager(roots()), log);
 
     println!();
 }
@@ -71,19 +64,23 @@ pub fn rayon(mut roots: Vec<Node>) -> Vec<Node> {
 
 // orx-parallel
 
-// struct NodePtr2<'a> {
-//     value: &'a Vec<u64>,
-//     children: &'a Vec<Node>,
-//     fib_n: *mut Vec<u64>,
-// }
-
+/// A temporary version of [`Node`] to be used for the parallel computation.
 struct NodePtr {
+    /// Values are immutable throughout the computation.
     value: *const Vec<u64>,
+    /// We do not mutate the children structure itself; however,
+    /// we mutate the `fib_n` field of each child, hence the `*mut`.
     children: *mut Vec<Node>,
+    /// This is our result that we mutate.
+    /// Since the parallel iterator will process each node only once,
+    /// this field will be written exactly once during the parallel
+    /// computation, and hence, there will be no race condition.
     fib_n: *mut Vec<u64>,
 }
 
 impl NodePtr {
+    /// SAFETY: We create the NodePtr` from a mutually exclusive reference
+    /// to make sure that we create only one `NodePtr` for each `Node`.
     fn new(node: &mut Node) -> Self {
         Self {
             value: (&node.value) as *const Vec<u64>,
@@ -92,22 +89,38 @@ impl NodePtr {
         }
     }
 
-    fn children(&self) -> impl ExactSizeIterator<Item = NodePtr> {
-        let children = unsafe { &mut *self.children };
-        children.iter_mut().map(NodePtr::new)
-    }
-
     fn values(&self) -> &[u64] {
+        // SAFETY: Values are immutable behind `*const` throughout the computation.
+        // Further, since the `NodePtr` is created from a `&mut Node` reference,
+        // it cannot outlive the node it is created for. Therefore, the pointer
+        // and the dereferencing is valid.
         let values = unsafe { &*self.value };
         values.as_slice()
+    }
+
+    /// SAFETY: This method must be called at most once per `NodePtr`, and hence,
+    /// per `Node` concurrently to avoid race conditions.
+    ///
+    /// SAFETY-PAR-ITER: It is safe to use for the extension of a recursive parallel iterator,
+    /// since the iterator guarantees that each node will be processed exactly once.
+    fn set_fib_n(self, fib_n: Vec<u64>) {
+        // SAFETY: Since this method is called at most once per `NodePtr`, this mutable reference will be mutually exclusive.
+        let vec_fib_n = unsafe { &mut *(self.fib_n as *mut Vec<u64>) };
+        *vec_fib_n = fib_n;
     }
 }
 
 unsafe impl Send for NodePtr {}
 
+/// SAFETY: This method must be called at most once per `NodePtr`, and hence,
+/// per `Node` concurrently to avoid race conditions.
+///
+/// SAFETY-PAR-ITER: It is safe to use for the extension of a recursive parallel iterator,
+/// since the iterator guarantees that each node will be extended exactly once.
 fn extend<'a>(node_ptr: &NodePtr) -> impl ExactSizeIterator<Item = NodePtr> + use<'a> {
-    let node_ptr = unsafe { &*(node_ptr as *const NodePtr) };
-    node_ptr.children()
+    // SAFETY: Since this method is called at most once per `NodePtr`, this mutable reference will be mutually exclusive.
+    let children = unsafe { &mut *node_ptr.children };
+    children.iter_mut().map(NodePtr::new)
 }
 
 pub fn orx_rec_exact(mut roots: Vec<Node>) -> Vec<Node> {
@@ -118,40 +131,34 @@ pub fn orx_rec_exact(mut roots: Vec<Node>) -> Vec<Node> {
     root_ptrs
         .into_par_rec_exact(extend, num_nodes)
         .for_each(|x| {
-            let fib_n: Vec<_> = x.values().iter().map(|x| Node::compute(*x)).collect();
-            // x.set_fib_n(fib_n);
-
-            let vec_fib_n = unsafe { &mut *(x.fib_n as *mut Vec<u64>) };
-            *vec_fib_n = fib_n;
+            let fib_n = x.values().iter().map(|x| Node::compute(*x)).collect();
+            x.set_fib_n(fib_n);
         });
 
     roots
 }
 
-// pub fn orx_rec(roots: Vec<Node>, chunk_size: usize) -> Vec<Node> {
-//     let root_ptrs: Vec<_> = roots.iter().map(NodePtr::new_org).collect();
+pub fn orx_rec(mut roots: Vec<Node>, chunk_size: usize) -> Vec<Node> {
+    let root_ptrs: Vec<_> = roots.iter_mut().map(NodePtr::new).collect();
 
-//     root_ptrs
-//         .into_par_rec(extend_org)
-//         .chunk_size(chunk_size)
-//         .for_each(|x| {
-//             let fib_n = x.values().iter().map(|x| Node::compute(*x));
-//             x.set_fib_n(fib_n);
-//         });
+    root_ptrs
+        .into_par_rec(extend)
+        .chunk_size(chunk_size)
+        .for_each(|x| {
+            let fib_n = x.values().iter().map(|x| Node::compute(*x)).collect();
+            x.set_fib_n(fib_n);
+        });
 
-//     roots
-// }
+    roots
+}
 
-// pub fn orx_rec_into_eager(roots: Vec<Node>) -> Vec<Node> {
-//     let root_ptrs: Vec<_> = roots.iter().map(NodePtr::new_org).collect();
+pub fn orx_rec_into_eager(mut roots: Vec<Node>) -> Vec<Node> {
+    let root_ptrs: Vec<_> = roots.iter_mut().map(NodePtr::new).collect();
 
-//     root_ptrs
-//         .into_par_rec(extend_org)
-//         .into_eager()
-//         .for_each(|x| {
-//             let fib_n = x.values().iter().map(|x| Node::compute(*x));
-//             x.set_fib_n(fib_n);
-//         });
+    root_ptrs.into_par_rec(extend).into_eager().for_each(|x| {
+        let fib_n = x.values().iter().map(|x| Node::compute(*x)).collect();
+        x.set_fib_n(fib_n);
+    });
 
-//     roots
-// }
+    roots
+}
