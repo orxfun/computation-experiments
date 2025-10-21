@@ -1,4 +1,4 @@
-use crate::AMOUNT_OF_WORK;
+use crate::amount_of_work;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
@@ -42,7 +42,7 @@ impl Node {
 
     /// Fibonacci as example computation on each of the node values.
     pub fn compute(value: u64) -> u64 {
-        (0..AMOUNT_OF_WORK)
+        (0..*amount_of_work())
             .map(|j| {
                 let n = core::hint::black_box(value + j as u64);
                 let mut a = 0;

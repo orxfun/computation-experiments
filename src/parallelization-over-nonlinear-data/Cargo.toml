@@ -5,9 +5,10 @@ edition = "2024"
 publish = ["artifactory"]
 
 [dependencies]
-orx-concurrent-bag = { version = "3.4.0", registry = "artifactory" }
+orx-concurrent-bag = { version = "3.4.0" }
 orx-parallel = { git = "https://github.com/orxfun/orx-parallel/", branch = "special-termination-condition" }
 orx-concurrent-recursive-iter = { path = "../../../orx-concurrent-recursive-iter" }
 rand = "0.9.2"
 rand_chacha = "0.9"
 rayon = "1.11.0"
+clap = { version = "4.5.50", features = ["derive"] }

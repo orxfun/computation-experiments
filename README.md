@@ -6,6 +6,15 @@ We can create a new folder for each case and work on them in parallel.
 
 ## Cases
 
+### Parallel Iteration over Non-Linear Data Structures
+
+[src](https://github.com/orxfun/computation-experiments/tree/main/src/parallelization-over-nonlinear-data)
+
+```bash
+cd src/parallelization-over-nonlinear-data/
+
+```
+
 ### Length Delimited Codec
 
 [src](https://github.com/orxfun/computation-experiments/tree/main/src/length-delimited-codec)

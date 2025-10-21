@@ -1,4 +1,6 @@
 use crate::data::Node;
+use clap::Parser;
+use std::sync::OnceLock;
 
 mod data;
 mod immutable_collection;
@@ -7,7 +9,17 @@ mod mutable_collection;
 mod run_utils;
 mod using_immutable_reduction;
 
-pub const AMOUNT_OF_WORK: usize = 1;
+#[derive(Parser, Debug)]
+struct Args {
+    /// Amount of work (num times Fibonacci will be repeated).
+    #[arg(long, default_value_t = 1)]
+    amount_of_work: usize,
+}
+
+pub fn amount_of_work() -> &'static usize {
+    static WORK: OnceLock<usize> = OnceLock::new();
+    WORK.get_or_init(|| Args::parse().amount_of_work)
+}
 
 fn main() {
     let seed = 42;
