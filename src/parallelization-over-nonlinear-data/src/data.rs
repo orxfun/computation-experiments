@@ -57,6 +57,13 @@ impl Node {
             .sum()
     }
 
+    pub fn compute_using_mut_var(value: u64, rng: &mut impl Rng) -> u64 {
+        match rng.random_bool(0.7) {
+            true => Self::compute(value),
+            false => Self::compute(value / 2),
+        }
+    }
+
     pub fn example_roots(seed: u64) -> Vec<Node> {
         let mut rng = ChaCha8Rng::seed_from_u64(seed);
 
