@@ -2,9 +2,11 @@ use crate::AMOUNT_OF_WORK;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 
+#[derive(Clone)]
 pub struct Node {
     pub value: Vec<u64>,
     pub children: Vec<Node>,
+    pub fib_n: Vec<u64>,
 }
 
 impl Node {
@@ -26,6 +28,7 @@ impl Node {
                 .map(|_| rng.random_range(0..40))
                 .collect(),
             children,
+            fib_n: vec![],
         }
     }
 
@@ -56,10 +59,19 @@ impl Node {
 
     pub fn example_roots(seed: u64) -> Vec<Node> {
         let mut rng = ChaCha8Rng::seed_from_u64(seed);
-        vec![
+
+        #[cfg(not(miri))]
+        return vec![
             Node::new(5000, &mut rng),
             Node::new(2000, &mut rng),
             Node::new(4000, &mut rng),
+        ];
+
+        #[cfg(miri)]
+        vec![
+            Node::new(50, &mut rng),
+            Node::new(20, &mut rng),
+            Node::new(40, &mut rng),
         ]
     }
 }

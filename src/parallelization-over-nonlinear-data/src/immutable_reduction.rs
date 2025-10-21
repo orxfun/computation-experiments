@@ -72,7 +72,10 @@ pub fn rayon(roots: &[Node]) -> u64 {
 
 // orx-parallel
 
-fn extend<'a, 'b>(node: &'a &'b Node) -> &'b [Node] {
+fn extend<'a, 'b>(node: &&'a Node) -> &'b [Node]
+where
+    'a: 'b,
+{
     &node.children
 }
 
