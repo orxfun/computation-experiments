@@ -8,6 +8,8 @@ We can create a new folder for each case and work on them in parallel.
 
 ### Parallel Computation over Non-Linear Data Structures
 
+*You may find all examples and experiments [here](https://github.com/orxfun/computation-experiments/tree/main/src/parallelization-over-nonlinear-data)*.
+
 We can conveniently perform parallel computation over linear data structures such as slices. It is more difficult to do it with non-linear structures such as trees or directed acyclic graphs.
 
 One way to achieve this is to use **rayon**'s scoped computations. Scopes allow to define the lifetime relations so that we do not get lifetime errors. Inside the scoped block, we can define our computation. This is flexible since we can define custom computations. Further, since the lifetime relations are handled with scopes, we can recursively call the function. Please see [`in_place_scope`](https://docs.rs/rayon/1.11.0/rayon/fn.in_place_scope.html) for details.
@@ -24,4 +26,4 @@ cargo run --release -- --amount-of-work 10
 
 ### Length Delimited Codec
 
-[src](https://github.com/orxfun/computation-experiments/tree/main/src/length-delimited-codec)
+*You may find all examples and experiments [here](https://github.com/orxfun/computation-experiments/tree/main/src/length-delimited-codec)*.
