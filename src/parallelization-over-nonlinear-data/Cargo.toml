@@ -1,0 +1,11 @@
+[package]
+name = "length-delimited-codec"
+version = "0.1.0"
+edition = "2024"
+publish = ["artifactory"]
+
+[dependencies]
+orx-parallel = { git = "https://github.com/orxfun/orx-parallel/", branch = "special-termination-condition" }
+rand = "0.9.2"
+rand_chacha = "0.9"
+rayon = "1.11.0"
