@@ -24,7 +24,7 @@ pub fn run_all(roots: &[Node]) {
 
     run("orx_rec_exact", || orx_rec_exact(roots()), log);
 
-    run("orx_rec", || orx_rec(roots(), 1024), log);
+    run("orx_rec_1024", || orx_rec_1024(roots(), 1024), log);
 
     run("orx_rec_into_eager", || orx_rec_into_eager(roots()), log);
 
@@ -144,7 +144,7 @@ pub fn orx_rec_exact(mut roots: Vec<Node>) -> Vec<Node> {
     roots
 }
 
-pub fn orx_rec(mut roots: Vec<Node>, chunk_size: usize) -> Vec<Node> {
+pub fn orx_rec_1024(mut roots: Vec<Node>, chunk_size: usize) -> Vec<Node> {
     let root_ptrs: Vec<_> = roots.iter_mut().map(NodePtr::new).collect();
 
     root_ptrs

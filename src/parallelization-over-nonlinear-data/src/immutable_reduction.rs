@@ -17,7 +17,7 @@ pub fn run_all(roots: &[Node]) {
         || orx_rec_exact_flatmap(roots),
         log,
     );
-    run("orx_rec", || orx_rec(roots, 1024), log);
+    run("orx_rec_1024", || orx_rec_1024(roots, 1024), log);
     run("orx_rec_into_eager", || orx_rec_into_eager(roots), log);
     run(
         "orx_rec_into_eager_flatmap",
@@ -90,7 +90,7 @@ pub fn orx_rec_exact_flatmap(roots: &[Node]) -> u64 {
         .sum()
 }
 
-pub fn orx_rec(roots: &[Node], chunk_size: usize) -> u64 {
+pub fn orx_rec_1024(roots: &[Node], chunk_size: usize) -> u64 {
     roots
         .into_par_rec(extend)
         .chunk_size(chunk_size)

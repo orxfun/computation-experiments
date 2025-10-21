@@ -25,9 +25,9 @@ fn main() {
     let seed = 42;
     let roots = Node::example_roots(seed);
 
-    // immutable_reduction::run_all(&roots);
-    // immutable_collection::run_all(&roots);
+    immutable_reduction::run_all(&roots);
+    immutable_collection::run_all(&roots);
     mutable_collection::run_all(&roots);
 
-    // using_immutable_reduction::run_all(&roots);
+    using_immutable_reduction::run_all(&roots);
 }
