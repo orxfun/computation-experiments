@@ -10,7 +10,13 @@ pub fn run_all(roots: &[Node]) {
     let log = |sum: u64| println!("  sum = {sum}");
 
     run("sequential", || sequential(roots), log);
+
+    // rayon miri fails with:
+    // Undefined Behavior: trying to retag from <84156795> for SharedReadWrite permission at alloc41643328[0x8],
+    // but that tag does not exist in the borrow stack for this location
+    #[cfg(not(miri))]
     run("rayon", || rayon(roots), log);
+
     run("orx_rec_exact", || orx_rec_exact(roots), log);
     run(
         "orx_rec_exact_flatmap",

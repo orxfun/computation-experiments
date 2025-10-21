@@ -18,7 +18,9 @@ pub fn run_all(roots: &[Node]) {
 
     run("sequential", || sequential(roots()), log);
 
-    // rayon miri fails with: Undefined Behavior: trying to retag from <84156795> for SharedReadWrite permission at alloc41643328[0x8], but that tag does not exist in the borrow stack for this location
+    // rayon miri fails with:
+    // Undefined Behavior: trying to retag from <84156795> for SharedReadWrite permission at alloc41643328[0x8],
+    // but that tag does not exist in the borrow stack for this location
     #[cfg(not(miri))]
     run("rayon", || rayon(roots()), log);
 
