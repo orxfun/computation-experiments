@@ -33,17 +33,10 @@ pub fn run_all(roots: &[Node]) {
         )
     };
 
-    let f = || sequential(roots);
-    run("sequential", f, log);
-
-    let f = || orx_rec_exact(roots);
-    run("orx_rec_exact", f, log);
-
-    let f = || orx_rec(roots, 1024);
-    run("orx_rec", f, log);
-
-    let f = || orx_rec_into_eager(roots);
-    run("orx_rec_into_eager", f, log);
+    run("sequential", || sequential(roots), log);
+    run("orx_rec_exact", || orx_rec_exact(roots), log);
+    run("orx_rec_1024", || orx_rec_1024(roots, 1024), log);
+    run("orx_rec_into_eager", || orx_rec_into_eager(roots), log);
 
     println!();
 }
@@ -83,7 +76,7 @@ pub fn orx_rec_exact<'a>(roots: &'a [Node]) -> Vec<FibN<'a>> {
         .collect()
 }
 
-pub fn orx_rec<'a>(roots: &'a [Node], chunk_size: usize) -> Vec<FibN<'a>> {
+pub fn orx_rec_1024<'a>(roots: &'a [Node], chunk_size: usize) -> Vec<FibN<'a>> {
     roots
         .into_par_rec(extend)
         .chunk_size(chunk_size)

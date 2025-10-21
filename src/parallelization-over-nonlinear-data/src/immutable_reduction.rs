@@ -9,26 +9,27 @@ pub fn run_all(roots: &[Node]) {
     println!("\n\n# IMMUTABLE REDUCTION");
     let log = |sum: u64| println!("  sum = {sum}");
 
-    let f = || sequential(roots);
-    run("sequential", f, log);
+    run("sequential", || sequential(roots), log);
 
-    let f = || rayon(roots);
-    run("rayon", f, log);
+    // rayon miri fails with:
+    // Undefined Behavior: trying to retag from <84156795> for SharedReadWrite permission at alloc41643328[0x8],
+    // but that tag does not exist in the borrow stack for this location
+    #[cfg(not(miri))]
+    run("rayon", || rayon(roots), log);
 
-    let f = || orx_rec_exact(roots);
-    run("orx_rec_exact", f, log);
-
-    let f = || orx_rec_exact_flatmap(roots);
-    run("orx_rec_exact_flatmap", f, log);
-
-    let f = || orx_rec(roots, 1024);
-    run("orx_rec", f, log);
-
-    let f = || orx_rec_into_eager(roots);
-    run("orx_rec_into_eager", f, log);
-
-    let f = || orx_rec_into_eager_flatmap(roots);
-    run("orx_rec_into_eager_flatmap", f, log);
+    run("orx_rec_exact", || orx_rec_exact(roots), log);
+    run(
+        "orx_rec_exact_flatmap",
+        || orx_rec_exact_flatmap(roots),
+        log,
+    );
+    run("orx_rec_1024", || orx_rec_1024(roots, 1024), log);
+    run("orx_rec_into_eager", || orx_rec_into_eager(roots), log);
+    run(
+        "orx_rec_into_eager_flatmap",
+        || orx_rec_into_eager_flatmap(roots),
+        log,
+    );
 
     println!();
 }
@@ -95,7 +96,7 @@ pub fn orx_rec_exact_flatmap(roots: &[Node]) -> u64 {
         .sum()
 }
 
-pub fn orx_rec(roots: &[Node], chunk_size: usize) -> u64 {
+pub fn orx_rec_1024(roots: &[Node], chunk_size: usize) -> u64 {
     roots
         .into_par_rec(extend)
         .chunk_size(chunk_size)
