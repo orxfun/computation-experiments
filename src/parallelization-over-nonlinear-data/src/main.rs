@@ -3,6 +3,7 @@ use std::sync::OnceLock;
 
 mod run_utils;
 mod tree_with_allocated_children;
+mod tree_with_on_the_fly_children;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -19,5 +20,6 @@ pub fn amount_of_work() -> &'static usize {
 fn main() {
     let seed = 42;
 
-    tree_with_allocated_children::run(seed);
+    // tree_with_allocated_children::run(seed);
+    tree_with_on_the_fly_children::run(seed);
 }
