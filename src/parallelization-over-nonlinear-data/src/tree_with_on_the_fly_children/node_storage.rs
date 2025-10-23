@@ -1,27 +1,7 @@
+use crate::tree_with_on_the_fly_children::node::Node;
 use rand::Rng;
-use std::fmt::Debug;
 
 const MAX_NUM_SYMBOLS: usize = 5;
-
-#[derive(Clone)]
-pub struct Node {
-    pub id: usize,
-    pub symbols: Vec<String>,
-    pub symbols_out: Vec<String>,
-}
-
-impl Debug for Node {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Node")
-            .field("id", &self.id)
-            .field("symbols", &format!("{:?}", &self.symbols).replace("\"", ""))
-            .field(
-                "symbols_out",
-                &format!("{:?}", &self.symbols_out).replace("\"", ""),
-            )
-            .finish()
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct NodesStorage {

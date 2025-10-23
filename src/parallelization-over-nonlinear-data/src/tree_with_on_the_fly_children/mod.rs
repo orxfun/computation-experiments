@@ -1,8 +1,10 @@
-use crate::tree_with_on_the_fly_children::data::NodesStorage;
+use crate::tree_with_on_the_fly_children::node_storage::NodesStorage;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 
-mod data;
+mod load_status;
+mod node;
+mod node_storage;
 
 pub fn run(seed: u64) {
     let mut rng = ChaCha8Rng::seed_from_u64(seed);
