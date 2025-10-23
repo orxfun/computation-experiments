@@ -7,24 +7,58 @@ pub enum NodeState {
     Processed,
 }
 
-pub struct NodeStatus {
-    already_loaded: Vec<AtomicBool>,
+pub struct NodeStatusPar {
+    loaded: Vec<AtomicBool>,
+    processed: Vec<AtomicBool>,
 }
 
-impl NodeStatus {
-    pub fn new(len: usize) -> Self {
+impl NodeStatusPar {
+    pub fn new(len: usize, roots: &[&Node]) -> Self {
+        let loaded = (0..len)
+            .map(|idx| roots.iter().any(|x| x.id == idx).into())
+            .collect();
         Self {
-            already_loaded: (0..len).map(|_| false.into()).collect(),
+            loaded,
+            processed: (0..len).map(|_| false.into()).collect(),
         }
     }
 
     pub fn node_state(&self, idx: usize) -> NodeState {
-        match self.already_loaded[idx]
+        match self.loaded[idx]
             .compare_exchange(false, true, Ordering::AcqRel, Ordering::Relaxed)
             .is_ok()
         {
             true => NodeState::NotLoaded,
             false => NodeState::Loaded,
+        }
+    }
+
+    pub fn start_processing(&self, node: &Node) -> bool {
+        match self.processed[node.id].compare_exchange(
+            false,
+            true,
+            Ordering::AcqRel,
+            Ordering::Relaxed,
+        ) {
+            Ok(_) => true,
+            Err(_) => false,
+        }
+    }
+
+    pub fn load_child(&self, node: &Node) -> bool {
+        match self.processed[node.id].load(Ordering::Relaxed) {
+            true => false,
+            false => {
+                match self.loaded[node.id].compare_exchange(
+                    false,
+                    true,
+                    Ordering::AcqRel,
+                    Ordering::Relaxed,
+                ) {
+                    Ok(_) => true,
+                    Err(_) => false,
+                }
+            }
         }
     }
 }
@@ -43,17 +77,6 @@ impl NodeStatusSeq {
         Self {
             loaded,
             processed: (0..len).map(|_| false).collect(),
-        }
-    }
-
-    pub fn node_state(&mut self, idx: usize) -> NodeState {
-        let is_loaded = self.loaded.get_mut(idx).unwrap();
-        match *is_loaded {
-            true => NodeState::Loaded,
-            false => {
-                *is_loaded = true;
-                NodeState::NotLoaded
-            }
         }
     }
 
