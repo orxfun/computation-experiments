@@ -17,4 +17,7 @@ pub fn run(seed: u64) {
             println!("{} - {}", m.id, s);
         }
     }
+
+    let roots = nodes.get_roots(2, &mut rng);
+    dbg!(roots);
 }

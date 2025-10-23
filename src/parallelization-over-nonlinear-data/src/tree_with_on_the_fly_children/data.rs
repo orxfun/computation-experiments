@@ -1,6 +1,4 @@
-use crate::amount_of_work;
-use rand::{Rng, SeedableRng};
-use rand_chacha::ChaCha8Rng;
+use rand::Rng;
 use std::fmt::Debug;
 
 const MAX_NUM_SYMBOLS: usize = 5;
@@ -71,5 +69,12 @@ impl NodesStorage {
             .iter()
             .find(|x| x.symbols.iter().any(|s| s == symbol_out))
             .unwrap()
+    }
+
+    pub fn get_roots(&self, number_of_roots: usize, rng: &mut impl Rng) -> Vec<&Node> {
+        (0..number_of_roots)
+            .map(|_| rng.random_range(0..self.all_nodes.len()))
+            .map(|idx| &self.all_nodes[idx])
+            .collect()
     }
 }
