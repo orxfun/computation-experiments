@@ -27,7 +27,7 @@ impl Debug for Node {
 
 #[derive(Clone, Debug)]
 pub struct NodesStorage {
-    all_nodes: Vec<Node>,
+    pub all_nodes: Vec<Node>,
 }
 
 impl NodesStorage {
@@ -55,7 +55,9 @@ impl NodesStorage {
                     if i != j {
                         let symbol_idx = rng.random_range(0..all_nodes[i].symbols.len());
                         let symbol = all_nodes[i].symbols[symbol_idx].clone();
-                        all_nodes[j].symbols_out.push(symbol);
+                        if !all_nodes[j].symbols_out.contains(&symbol) {
+                            all_nodes[j].symbols_out.push(symbol);
+                        }
                     }
                 }
             }

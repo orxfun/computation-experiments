@@ -8,5 +8,13 @@ pub fn run(seed: u64) {
     let mut rng = ChaCha8Rng::seed_from_u64(seed);
 
     let nodes = NodesStorage::new(4, &mut rng);
-    dbg!(nodes);
+    dbg!(&nodes);
+
+    for n in &nodes.all_nodes {
+        println!("\nnode {}", n.id);
+        for s in &n.symbols_out {
+            let m = nodes.get_relevant_node(s);
+            println!("{} - {}", m.id, s);
+        }
+    }
 }
