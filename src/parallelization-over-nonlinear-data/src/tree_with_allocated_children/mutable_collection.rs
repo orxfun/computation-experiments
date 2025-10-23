@@ -1,4 +1,5 @@
-use crate::{data::Node, run_utils::run};
+use super::data::Node;
+use crate::run_utils::run;
 use orx_parallel::*;
 use rayon::iter::*;
 
