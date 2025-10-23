@@ -26,3 +26,26 @@ impl NodeStatus {
         }
     }
 }
+
+pub struct NodeStatusSeq {
+    already_loaded: Vec<bool>,
+}
+
+impl NodeStatusSeq {
+    pub fn new(len: usize) -> Self {
+        Self {
+            already_loaded: (0..len).map(|_| false).collect(),
+        }
+    }
+
+    pub fn get_load_state(&mut self, idx: usize) -> LoadState {
+        let is_loaded = self.already_loaded.get_mut(idx).unwrap();
+        match *is_loaded {
+            true => LoadState::AlreadyLoaded,
+            false => {
+                *is_loaded = true;
+                LoadState::NotLoadedYet
+            }
+        }
+    }
+}

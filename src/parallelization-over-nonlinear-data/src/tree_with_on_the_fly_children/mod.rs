@@ -5,6 +5,7 @@ use rand_chacha::ChaCha8Rng;
 mod load_status;
 mod node;
 mod node_storage;
+mod parallel_computation;
 
 pub fn run(seed: u64) {
     let mut rng = ChaCha8Rng::seed_from_u64(seed);
