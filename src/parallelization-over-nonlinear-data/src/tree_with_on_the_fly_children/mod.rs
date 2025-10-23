@@ -10,18 +10,8 @@ mod node_storage;
 pub fn run(seed: u64) {
     let mut rng = ChaCha8Rng::seed_from_u64(seed);
 
-    let storage = NodesStorage::new(4, &mut rng);
-    let roots = storage.get_roots(2, &mut rng);
-
-    dbg!(&storage, &roots);
+    let storage = NodesStorage::new(50_000, &mut rng);
+    let roots = storage.get_roots(20, &mut rng);
 
     computation_reduce::run_all(&storage, &roots);
-
-    // for n in &storage.all_nodes {
-    //     println!("\nnode {}", n.id);
-    //     for s in &n.symbols_out {
-    //         let m = storage.get_relevant_node(s);
-    //         println!("{} - {}", m.id, s);
-    //     }
-    // }
 }
