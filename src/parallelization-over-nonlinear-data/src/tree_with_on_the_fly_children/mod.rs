@@ -2,25 +2,26 @@ use crate::tree_with_on_the_fly_children::node_storage::NodesStorage;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 
+mod computation_reduce;
 mod load_status;
 mod node;
 mod node_storage;
-mod parallel_computation;
 
 pub fn run(seed: u64) {
     let mut rng = ChaCha8Rng::seed_from_u64(seed);
 
-    let nodes = NodesStorage::new(4, &mut rng);
-    dbg!(&nodes);
+    let storage = NodesStorage::new(4, &mut rng);
+    let roots = storage.get_roots(2, &mut rng);
 
-    for n in &nodes.all_nodes {
-        println!("\nnode {}", n.id);
-        for s in &n.symbols_out {
-            let m = nodes.get_relevant_node(s);
-            println!("{} - {}", m.id, s);
-        }
-    }
+    dbg!(&storage, &roots);
 
-    let roots = nodes.get_roots(2, &mut rng);
-    dbg!(roots);
+    computation_reduce::run_all(&storage, &roots);
+
+    // for n in &storage.all_nodes {
+    //     println!("\nnode {}", n.id);
+    //     for s in &n.symbols_out {
+    //         let m = storage.get_relevant_node(s);
+    //         println!("{} - {}", m.id, s);
+    //     }
+    // }
 }

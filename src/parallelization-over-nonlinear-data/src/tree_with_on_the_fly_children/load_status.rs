@@ -1,8 +1,10 @@
+use crate::tree_with_on_the_fly_children::node::Node;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-pub enum LoadState {
-    AlreadyLoaded,
-    NotLoadedYet,
+pub enum NodeState {
+    NotLoaded,
+    Loaded,
+    Processed,
 }
 
 pub struct NodeStatus {
@@ -16,35 +18,68 @@ impl NodeStatus {
         }
     }
 
-    pub fn get_load_state(&self, idx: usize) -> LoadState {
+    pub fn node_state(&self, idx: usize) -> NodeState {
         match self.already_loaded[idx]
             .compare_exchange(false, true, Ordering::AcqRel, Ordering::Relaxed)
             .is_ok()
         {
-            true => LoadState::NotLoadedYet,
-            false => LoadState::AlreadyLoaded,
+            true => NodeState::NotLoaded,
+            false => NodeState::Loaded,
         }
     }
 }
 
 pub struct NodeStatusSeq {
-    already_loaded: Vec<bool>,
+    loaded: Vec<bool>,
+    processed: Vec<bool>,
 }
 
 impl NodeStatusSeq {
-    pub fn new(len: usize) -> Self {
+    pub fn new(len: usize, roots: &[&Node]) -> Self {
+        let loaded = (0..len)
+            .map(|idx| roots.iter().any(|x| x.id == idx))
+            .collect();
+
         Self {
-            already_loaded: (0..len).map(|_| false).collect(),
+            loaded,
+            processed: (0..len).map(|_| false).collect(),
         }
     }
 
-    pub fn get_load_state(&mut self, idx: usize) -> LoadState {
-        let is_loaded = self.already_loaded.get_mut(idx).unwrap();
+    pub fn node_state(&mut self, idx: usize) -> NodeState {
+        let is_loaded = self.loaded.get_mut(idx).unwrap();
         match *is_loaded {
-            true => LoadState::AlreadyLoaded,
+            true => NodeState::Loaded,
             false => {
                 *is_loaded = true;
-                LoadState::NotLoadedYet
+                NodeState::NotLoaded
+            }
+        }
+    }
+
+    pub fn start_processing(&mut self, node: &Node) -> bool {
+        let processed = self.processed.get_mut(node.id).unwrap();
+        match *processed {
+            true => false,
+            false => {
+                *processed = true;
+                true
+            }
+        }
+    }
+
+    pub fn load_child(&mut self, child: &Node) -> bool {
+        match self.processed[child.id] {
+            true => false,
+            false => {
+                let loaded = self.loaded.get_mut(child.id).unwrap();
+                match loaded {
+                    true => false,
+                    false => {
+                        *loaded = true;
+                        true
+                    }
+                }
             }
         }
     }
