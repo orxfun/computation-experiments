@@ -126,10 +126,10 @@ unsafe impl Send for NodePtr {}
 ///
 /// SAFETY-PAR-ITER: It is safe to use for the extension of a recursive parallel iterator,
 /// since the iterator guarantees that each node will be extended exactly once.
-fn extend<'a>(node_ptr: &NodePtr) -> impl ExactSizeIterator<Item = NodePtr> + use<'a> {
+fn extend(node_ptr: &NodePtr, queue: &Queue<NodePtr>) {
     // SAFETY: Since this method is called at most once per `NodePtr`, this mutable reference will be mutually exclusive.
     let children = unsafe { &mut *node_ptr.children };
-    children.iter_mut().map(NodePtr::new)
+    queue.extend(children.iter_mut().map(NodePtr::new));
 }
 
 pub fn orx_rec_exact(mut roots: Vec<Node>) -> Vec<Node> {

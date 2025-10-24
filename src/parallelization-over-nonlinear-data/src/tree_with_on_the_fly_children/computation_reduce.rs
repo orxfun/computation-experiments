@@ -7,7 +7,7 @@ use crate::{
     },
 };
 use orx_imp_vec::{ImpVec, PinnedVec};
-use orx_parallel::{IntoParIterRec, IntoParIterRecExact, ParIter};
+use orx_parallel::*;
 
 // all
 
@@ -17,12 +17,12 @@ pub fn run_all(storage: &NodesStorage, roots: &[&Node]) {
 
     run("sequential", || sequential(storage, roots), log);
     run("orx_rec_exact", || orx_rec_exact(storage, roots), log);
-    // run("orx_rec_chunk", || orx_rec_chunk(storage, roots, 1024), log);
-    // run(
-    //     "orx_rec_into_eager",
-    //     || orx_rec_into_eager(storage, roots),
-    //     log,
-    // );
+    run("orx_rec_chunk", || orx_rec_chunk(storage, roots, 1024), log);
+    run(
+        "orx_rec_into_eager",
+        || orx_rec_into_eager(storage, roots),
+        log,
+    );
 
     println!();
 }
@@ -65,26 +65,26 @@ pub fn sequential(storage: &NodesStorage, roots: &[&Node]) -> u64 {
 
 // orx
 
-fn extend<'a, 'b>(
-    storage: &'b NodesStorage,
-    status: &'a NodeStatusPar,
-    node: &'a &'a Node,
-) -> Vec<&'b Node> {
-    let mut children = vec![];
-    for s in &node.symbols_out {
-        let child = storage.get_relevant_node(s);
-        match status.load_child(child) {
-            false => continue,
-            true => children.push(child),
+fn get_extend<'x, 'b>(
+    storage: &'x NodesStorage,
+    status: &'x NodeStatusPar,
+) -> impl Fn(&&'b Node, &Queue<&'b Node>)
+where
+    'x: 'b,
+{
+    |node: &&'b Node, queue: &Queue<&'b Node>| {
+        for s in &node.symbols_out {
+            let child = storage.get_relevant_node(s);
+            if status.load_child(child) {
+                queue.push(child);
+            }
         }
     }
-    children
 }
 
-pub fn orx_rec_exact<'a>(storage: &'a NodesStorage, roots: &'a [&'a Node]) -> u64 {
+pub fn orx_rec_exact(storage: &NodesStorage, roots: &[&Node]) -> u64 {
     let status = NodeStatusPar::new(storage.all_nodes.len(), roots);
-
-    let extend = |node: &&Node| extend(storage, &status, node);
+    let extend = get_extend(storage, &status);
 
     roots
         .iter()
@@ -101,7 +101,7 @@ pub fn orx_rec_chunk<'a>(
 ) -> u64 {
     let status = NodeStatusPar::new(storage.all_nodes.len(), roots);
 
-    let extend = |node: &&Node| extend(storage, &status, node);
+    let extend = get_extend(storage, &status);
 
     roots
         .iter()
@@ -115,7 +115,7 @@ pub fn orx_rec_chunk<'a>(
 pub fn orx_rec_into_eager<'a>(storage: &'a NodesStorage, roots: &'a [&'a Node]) -> u64 {
     let status = NodeStatusPar::new(storage.all_nodes.len(), roots);
 
-    let extend = |node: &&Node| extend(storage, &status, node);
+    let extend = get_extend(storage, &status);
 
     roots
         .iter()

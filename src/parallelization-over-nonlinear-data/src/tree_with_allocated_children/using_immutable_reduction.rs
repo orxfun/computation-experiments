@@ -39,11 +39,8 @@ pub fn sequential(roots: &[Node]) -> u64 {
 
 // orx-parallel
 
-fn extend<'a, 'b>(node: &&'a Node) -> &'b [Node]
-where
-    'a: 'b,
-{
-    &node.children
+fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+    queue.extend(&node.children);
 }
 
 pub fn orx_rec_exact(roots: &[Node]) -> u64 {
