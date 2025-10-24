@@ -1,12 +1,6 @@
 use crate::tree_with_on_the_fly_children::node::Node;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-pub enum NodeState {
-    NotLoaded,
-    Loaded,
-    Processed,
-}
-
 pub struct NodeStatusPar {
     loaded: Vec<AtomicBool>,
     processed: Vec<AtomicBool>,
@@ -20,16 +14,6 @@ impl NodeStatusPar {
         Self {
             loaded,
             processed: (0..len).map(|_| false.into()).collect(),
-        }
-    }
-
-    pub fn node_state(&self, idx: usize) -> NodeState {
-        match self.loaded[idx]
-            .compare_exchange(false, true, Ordering::AcqRel, Ordering::Relaxed)
-            .is_ok()
-        {
-            true => NodeState::NotLoaded,
-            false => NodeState::Loaded,
         }
     }
 

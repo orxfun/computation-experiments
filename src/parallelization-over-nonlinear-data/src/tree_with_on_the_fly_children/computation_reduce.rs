@@ -17,16 +17,12 @@ pub fn run_all(storage: &NodesStorage, roots: &[&Node]) {
 
     run("sequential", || sequential(storage, roots), log);
     run("orx_rec_exact", || orx_rec_exact(storage, roots), log);
-    run(
-        "orx_rec_chunk",
-        || orx_rec_chunk(storage, roots, 8 * 1024),
-        log,
-    );
-    run(
-        "orx_rec_into_eager",
-        || orx_rec_into_eager(storage, roots),
-        log,
-    );
+    // run("orx_rec_chunk", || orx_rec_chunk(storage, roots, 128), log);
+    // run(
+    //     "orx_rec_into_eager",
+    //     || orx_rec_into_eager(storage, roots),
+    //     log,
+    // );
 
     println!();
 }
