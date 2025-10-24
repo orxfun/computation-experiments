@@ -7,7 +7,7 @@ publish = ["artifactory"]
 [dependencies]
 orx-concurrent-bag = { version = "3.4.0" }
 orx-parallel = { git = "https://github.com/orxfun/orx-parallel/", branch = "special-termination-condition" }
-orx-concurrent-recursive-iter = { path = "../../../orx-concurrent-recursive-iter" }
+orx-concurrent-recursive-iter = { git = "https://github.com/orxfun/orx-concurrent-recursive-iter", branch = "more-flexible-extension", default-features = false }
 rand = "0.9.2"
 rand_chacha = "0.9"
 rayon = "1.11.0"
