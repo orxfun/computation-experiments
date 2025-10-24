@@ -1,7 +1,7 @@
 use crate::tree_with_on_the_fly_children::node::Node;
 use rand::Rng;
 
-const MAX_NUM_SYMBOLS: usize = 5;
+const MAX_NUM_SYMBOLS: usize = 50;
 
 #[derive(Clone, Debug)]
 pub struct NodesStorage {

@@ -61,6 +61,13 @@ impl NodeStatusPar {
             }
         }
     }
+
+    pub fn num_processed(&self) -> usize {
+        self.processed
+            .iter()
+            .filter(|x| x.load(Ordering::Relaxed))
+            .count()
+    }
 }
 
 pub struct NodeStatusSeq {
@@ -105,5 +112,9 @@ impl NodeStatusSeq {
                 }
             }
         }
+    }
+
+    pub fn num_processed(&self) -> usize {
+        self.processed.iter().filter(|x| **x).count()
     }
 }

@@ -12,12 +12,16 @@ use orx_parallel::*;
 // all
 
 pub fn run_all(storage: &NodesStorage, roots: &[&Node]) {
-    println!("\n\n# IMMUTABLE COLLECTION");
-    let log = |sum: u64| println!("  sum = {sum}");
+    println!("\n\n# IMMUTABLE REDUCTION - GROWTH ON THE FLY");
+    let log = |(sum, count): (u64, usize)| println!("  count = {count}\n  sum = {sum}");
 
     run("sequential", || sequential(storage, roots), log);
     run("orx_rec_exact", || orx_rec_exact(storage, roots), log);
-    run("orx_rec_chunk", || orx_rec_chunk(storage, roots, 1024), log);
+    run(
+        "orx_rec_chunk",
+        || orx_rec_chunk(storage, roots, 8 * 1024),
+        log,
+    );
     run(
         "orx_rec_into_eager",
         || orx_rec_into_eager(storage, roots),
@@ -29,7 +33,7 @@ pub fn run_all(storage: &NodesStorage, roots: &[&Node]) {
 
 // seq
 
-pub fn sequential(storage: &NodesStorage, roots: &[&Node]) -> u64 {
+pub fn sequential(storage: &NodesStorage, roots: &[&Node]) -> (u64, usize) {
     let mut status = NodeStatusSeq::new(storage.all_nodes.len(), roots);
 
     let tasks: ImpVec<_> = roots.iter().copied().collect();
@@ -39,28 +43,25 @@ pub fn sequential(storage: &NodesStorage, roots: &[&Node]) -> u64 {
         match tasks.get(i) {
             None => break,
             Some(node) => {
-                match status.start_processing(node) {
-                    false => continue,
-                    true => {
-                        // extend
-                        for s in &node.symbols_out {
-                            let child = storage.get_relevant_node(s);
-                            match status.load_child(child) {
-                                false => continue,
-                                true => tasks.imp_push(child),
-                            }
+                if status.start_processing(node) {
+                    // extend
+                    for s in &node.symbols_out {
+                        let child = storage.get_relevant_node(s);
+                        match status.load_child(child) {
+                            false => continue,
+                            true => tasks.imp_push(child),
                         }
-
-                        // process
-                        let value = node.compute();
-                        sum += value;
                     }
+
+                    // process
+                    let value = node.compute();
+                    sum += value;
                 }
             }
         }
     }
 
-    sum
+    (sum, status.num_processed())
 }
 
 // orx
@@ -73,55 +74,61 @@ where
     'x: 'b,
 {
     |node: &&'b Node, queue: &Queue<&'b Node>| {
-        for s in &node.symbols_out {
-            let child = storage.get_relevant_node(s);
-            if status.load_child(child) {
-                queue.push(child);
+        if status.start_processing(node) {
+            for s in &node.symbols_out {
+                let child = storage.get_relevant_node(s);
+                if status.load_child(child) {
+                    queue.push(child);
+                }
             }
         }
     }
 }
 
-pub fn orx_rec_exact(storage: &NodesStorage, roots: &[&Node]) -> u64 {
+pub fn orx_rec_exact(storage: &NodesStorage, roots: &[&Node]) -> (u64, usize) {
     let status = NodeStatusPar::new(storage.all_nodes.len(), roots);
     let extend = get_extend(storage, &status);
 
-    roots
+    let sum = roots
         .iter()
         .copied()
         .into_par_rec_exact(extend, storage.all_nodes.len())
         .map(|x| x.compute())
-        .sum()
+        .sum();
+
+    (sum, status.num_processed())
 }
 
 pub fn orx_rec_chunk<'a>(
     storage: &'a NodesStorage,
     roots: &'a [&'a Node],
     chunk_size: usize,
-) -> u64 {
+) -> (u64, usize) {
     let status = NodeStatusPar::new(storage.all_nodes.len(), roots);
 
     let extend = get_extend(storage, &status);
 
-    roots
+    let sum = roots
         .iter()
         .copied()
         .into_par_rec(extend)
         .chunk_size(chunk_size)
         .map(|x| x.compute())
-        .sum()
+        .sum();
+    (sum, status.num_processed())
 }
 
-pub fn orx_rec_into_eager<'a>(storage: &'a NodesStorage, roots: &'a [&'a Node]) -> u64 {
+pub fn orx_rec_into_eager<'a>(storage: &'a NodesStorage, roots: &'a [&'a Node]) -> (u64, usize) {
     let status = NodeStatusPar::new(storage.all_nodes.len(), roots);
 
     let extend = get_extend(storage, &status);
 
-    roots
+    let sum = roots
         .iter()
         .copied()
         .into_par_rec(extend)
         .into_eager()
         .map(|x| x.compute())
-        .sum()
+        .sum();
+    (sum, status.num_processed())
 }
