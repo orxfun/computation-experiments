@@ -1,0 +1,11 @@
+[package]
+name = "parallelization-over-heterogeneous-work"
+version = "0.1.0"
+edition = "2024"
+publish = ["artifactory"]
+
+[dependencies]
+chili = "0.2.1"
+orx-parallel = "3.3.0"
+paralight = "0.0.7"
+rayon = "1.11.0"

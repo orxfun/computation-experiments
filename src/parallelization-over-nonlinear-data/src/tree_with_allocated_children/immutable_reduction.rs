@@ -1,4 +1,5 @@
-use crate::{data::Node, run_utils::run};
+use super::data::Node;
+use crate::run_utils::run;
 use orx_parallel::*;
 use rayon::iter::*;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -23,7 +24,7 @@ pub fn run_all(roots: &[Node]) {
         || orx_rec_exact_flatmap(roots),
         log,
     );
-    run("orx_rec_1024", || orx_rec_1024(roots, 1024), log);
+    run("orx_rec_chunk", || orx_rec_chunk(roots, 1024), log);
     run("orx_rec_into_eager", || orx_rec_into_eager(roots), log);
     run(
         "orx_rec_into_eager_flatmap",
@@ -73,11 +74,8 @@ pub fn rayon(roots: &[Node]) -> u64 {
 
 // orx-parallel
 
-fn extend<'a, 'b>(node: &&'a Node) -> &'b [Node]
-where
-    'a: 'b,
-{
-    &node.children
+fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+    queue.extend(&node.children);
 }
 
 pub fn orx_rec_exact(roots: &[Node]) -> u64 {
@@ -96,7 +94,7 @@ pub fn orx_rec_exact_flatmap(roots: &[Node]) -> u64 {
         .sum()
 }
 
-pub fn orx_rec_1024(roots: &[Node], chunk_size: usize) -> u64 {
+pub fn orx_rec_chunk(roots: &[Node], chunk_size: usize) -> u64 {
     roots
         .into_par_rec(extend)
         .chunk_size(chunk_size)
