@@ -19,8 +19,8 @@ pub fn run_all(storage: &NodesStorage, roots: &[&Node]) {
     run("orx_rec_exact", || orx_rec_exact(storage, roots), log);
     run("orx_rec_chunk", || orx_rec_chunk(storage, roots, 64), log);
     run(
-        "orx_rec_into_eager",
-        || orx_rec_into_eager(storage, roots),
+        "orx_rec_linearize",
+        || orx_rec_linearize(storage, roots),
         log,
     );
 
@@ -114,7 +114,7 @@ pub fn orx_rec_chunk<'a>(
     (sum, status.num_processed())
 }
 
-pub fn orx_rec_into_eager<'a>(storage: &'a NodesStorage, roots: &'a [&'a Node]) -> (u64, usize) {
+pub fn orx_rec_linearize<'a>(storage: &'a NodesStorage, roots: &'a [&'a Node]) -> (u64, usize) {
     let status = NodeStatusPar::new(storage.all_nodes.len(), roots);
 
     let extend = get_extend(storage, &status);
@@ -123,7 +123,7 @@ pub fn orx_rec_into_eager<'a>(storage: &'a NodesStorage, roots: &'a [&'a Node]) 
         .iter()
         .copied()
         .into_par_rec(extend)
-        .into_eager()
+        .linearize()
         .map(|x| x.compute())
         .sum();
     (sum, status.num_processed())
