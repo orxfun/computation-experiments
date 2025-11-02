@@ -1,4 +1,5 @@
-use crate::{data::Node, run_utils::run};
+use super::data::Node;
+use crate::run_utils::run;
 use orx_parallel::*;
 
 // setup
@@ -61,11 +62,8 @@ pub fn sequential<'a>(roots: &'a [Node]) -> Vec<FibN<'a>> {
 
 // orx-parallel
 
-fn extend<'a, 'b>(node: &&'a Node) -> &'b [Node]
-where
-    'a: 'b,
-{
-    &node.children
+fn extend<'a, 'b>(node: &'a &'b Node, queue: &Queue<&'b Node>) {
+    queue.extend(&node.children);
 }
 
 pub fn orx_rec_exact<'a>(roots: &'a [Node]) -> Vec<FibN<'a>> {

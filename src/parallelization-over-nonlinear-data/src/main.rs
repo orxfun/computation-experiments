@@ -1,13 +1,9 @@
-use crate::data::Node;
 use clap::Parser;
 use std::sync::OnceLock;
 
-mod data;
-mod immutable_collection;
-mod immutable_reduction;
-mod mutable_collection;
 mod run_utils;
-mod using_immutable_reduction;
+mod tree_with_allocated_children;
+mod tree_with_on_the_fly_children;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -23,11 +19,7 @@ pub fn amount_of_work() -> &'static usize {
 
 fn main() {
     let seed = 42;
-    let roots = Node::example_roots(seed);
 
-    immutable_reduction::run_all(&roots);
-    immutable_collection::run_all(&roots);
-    mutable_collection::run_all(&roots);
-
-    using_immutable_reduction::run_all(&roots);
+    // tree_with_allocated_children::run(seed);
+    tree_with_on_the_fly_children::run(seed);
 }
