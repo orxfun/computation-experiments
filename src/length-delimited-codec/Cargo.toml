@@ -5,3 +5,16 @@ edition = "2024"
 publish = ["artifactory"]
 
 [dependencies]
+binrw = { version = "0.15.0" }
+bytes = { version = "1.10.1" }
+common = { version = "0.1.0" }
+rayon = { version = "1.11.0" }
+orx-concurrent-queue = { version = "1.2.0" }
+rand = { version = "0.9.2" }
+
+[dev-dependencies]
+divan = { version = "0.1" }
+
+[[bench]]
+name = "pipeline"
+harness = false
