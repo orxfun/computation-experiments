@@ -25,10 +25,10 @@ pub fn run_all(roots: &[Node]) {
         log,
     );
     run("orx_rec_chunk", || orx_rec_chunk(roots, 1024), log);
-    run("orx_rec_into_eager", || orx_rec_into_eager(roots), log);
+    run("orx_rec_linearize", || orx_rec_linearize(roots), log);
     run(
-        "orx_rec_into_eager_flatmap",
-        || orx_rec_into_eager_flatmap(roots),
+        "orx_rec_linearize_flatmap",
+        || orx_rec_linearize_flatmap(roots),
         log,
     );
 
@@ -102,18 +102,18 @@ pub fn orx_rec_chunk(roots: &[Node], chunk_size: usize) -> u64 {
         .sum()
 }
 
-pub fn orx_rec_into_eager(roots: &[Node]) -> u64 {
+pub fn orx_rec_linearize(roots: &[Node]) -> u64 {
     roots
         .into_par_rec(extend)
-        .into_eager()
+        .linearize()
         .map(|x| x.value.iter().map(|x| Node::compute(*x)).sum::<u64>())
         .sum()
 }
 
-pub fn orx_rec_into_eager_flatmap(roots: &[Node]) -> u64 {
+pub fn orx_rec_linearize_flatmap(roots: &[Node]) -> u64 {
     roots
         .into_par_rec(extend)
-        .into_eager()
+        .linearize()
         .flat_map(|x| x.value.iter().map(|x| Node::compute(*x)))
         .sum()
 }

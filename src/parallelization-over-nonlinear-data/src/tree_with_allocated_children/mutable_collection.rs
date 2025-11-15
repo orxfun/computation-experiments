@@ -29,7 +29,7 @@ pub fn run_all(roots: &[Node]) {
 
     run("orx_rec_1024", || orx_rec_1024(roots(), 1024), log);
 
-    run("orx_rec_into_eager", || orx_rec_into_eager(roots()), log);
+    run("orx_rec_linearize", || orx_rec_linearize(roots()), log);
 
     println!();
 }
@@ -161,10 +161,10 @@ pub fn orx_rec_1024(mut roots: Vec<Node>, chunk_size: usize) -> Vec<Node> {
     roots
 }
 
-pub fn orx_rec_into_eager(mut roots: Vec<Node>) -> Vec<Node> {
+pub fn orx_rec_linearize(mut roots: Vec<Node>) -> Vec<Node> {
     let root_ptrs: Vec<_> = roots.iter_mut().map(NodePtr::new).collect();
 
-    root_ptrs.into_par_rec(extend).into_eager().for_each(|x| {
+    root_ptrs.into_par_rec(extend).linearize().for_each(|x| {
         let fib_n = x.values().iter().map(|x| Node::compute(*x)).collect();
         x.set_fib_n(fib_n);
     });

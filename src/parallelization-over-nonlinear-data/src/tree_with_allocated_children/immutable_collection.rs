@@ -37,7 +37,7 @@ pub fn run_all(roots: &[Node]) {
     run("sequential", || sequential(roots), log);
     run("orx_rec_exact", || orx_rec_exact(roots), log);
     run("orx_rec_1024", || orx_rec_1024(roots, 1024), log);
-    run("orx_rec_into_eager", || orx_rec_into_eager(roots), log);
+    run("orx_rec_linearize", || orx_rec_linearize(roots), log);
 
     println!();
 }
@@ -82,10 +82,10 @@ pub fn orx_rec_1024<'a>(roots: &'a [Node], chunk_size: usize) -> Vec<FibN<'a>> {
         .collect()
 }
 
-pub fn orx_rec_into_eager<'a>(roots: &'a [Node]) -> Vec<FibN<'a>> {
+pub fn orx_rec_linearize<'a>(roots: &'a [Node]) -> Vec<FibN<'a>> {
     roots
         .into_par_rec(extend)
-        .into_eager()
+        .linearize()
         .map(FibN::compute)
         .collect()
 }

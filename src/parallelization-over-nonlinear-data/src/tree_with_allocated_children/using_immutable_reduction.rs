@@ -13,7 +13,7 @@ pub fn run_all(roots: &[Node]) {
     run("sequential", || sequential(roots), log);
     run("orx_rec_exact", || orx_rec_exact(roots), log);
     run("orx_rec_1024", || orx_rec_1024(roots, 1024), log);
-    run("orx_rec_into_eager", || orx_rec_into_eager(roots), log);
+    run("orx_rec_linearize", || orx_rec_linearize(roots), log);
 
     println!();
 }
@@ -71,10 +71,10 @@ pub fn orx_rec_1024(roots: &[Node], chunk_size: usize) -> u64 {
         .sum()
 }
 
-pub fn orx_rec_into_eager(roots: &[Node]) -> u64 {
+pub fn orx_rec_linearize(roots: &[Node]) -> u64 {
     roots
         .into_par_rec(extend)
-        .into_eager()
+        .linearize()
         .using(|thread_idx| ChaCha8Rng::seed_from_u64(64 + thread_idx as u64))
         .map(|rng, x| {
             x.value
